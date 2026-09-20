@@ -1,0 +1,43 @@
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import time
+
+# ---------------------------------------------------------
+# Web Scraping Script - Task 1
+# ---------------------------------------------------------
+
+urls = [
+    "https://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html"
+]
+
+all_books = []
+
+for u in urls:
+    response = requests.get(u)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        books = soup.find_all('article', class_='product_pod')
+        
+        for book in books:
+            title = book.h3.a['title']
+            price = book.find('p', class_='price_color').text
+            
+            rating_class = book.find('p', class_='star-rating')['class']
+            rating = rating_class[1] if len(rating_class) > 1 else 'None'
+            
+            availability = book.find('p', class_='instock availability').text.strip()
+            
+            all_books.append({
+                'Title': title,
+                'Price': price,
+                'Rating': rating,
+                'Availability': availability
+            })
+
+df = pd.DataFrame(all_books)
+
+print(df.head())
+
+df.to_csv('scraped_books.csv', index=False)
